@@ -31,7 +31,7 @@ namespace Screen_Capture {
         w.Size.x = windowrect.ClientRect.right - windowrect.ClientRect.left;
         w.Size.y = windowrect.ClientRect.bottom - windowrect.ClientRect.top;
 
-        std::transform(std::begin(w.Name), std::end(w.Name), std::begin(w.Name), [](char c) { return static_cast<char>(std::tolower(c)); });
+        std::transform(std::begin(w.Name), std::end(w.Name), std::begin(w.Name), [](unsigned char c) { return static_cast<unsigned char>(std::tolower(c)); });
         s->Found.push_back(w);
         return TRUE;
     }
