@@ -243,5 +243,6 @@ namespace Screen_Capture {
     // number of bytes per row, NOT including the Rowpadding
     int RowStride(const Image &img) { return sizeof(ImageBGRA) * Width(img); }
     const ImageBGRA *StartSrc(const Image &img) { return img.Data; }
+    int BytesToNextRow(const Image &img) { return img.BytesToNextRow; }
 } // namespace Screen_Capture
 } // namespace SL

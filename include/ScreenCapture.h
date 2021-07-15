@@ -93,6 +93,7 @@ namespace Screen_Capture {
     SC_LITE_EXTERN const ImageBGRA *StartSrc(const Image &img);
     SC_LITE_EXTERN const ImageBGRA *GotoNextRow(const Image &img, const ImageBGRA *current);
     SC_LITE_EXTERN bool isDataContiguous(const Image &img);
+    SC_LITE_EXTERN int BytesToNextRow(const Image &img);
     /*
         this is the ONLY funcion for pulling data out of the Image object and is layed out here in the header so that
         users can see how to extra data and convert it to their own needed format. Initially, I included custom extract functions
