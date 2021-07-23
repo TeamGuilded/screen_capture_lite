@@ -1,5 +1,6 @@
 #include "GDIFrameProcessor.h"
 #include <Dwmapi.h>
+#include <iostream>
 
 namespace SL {
 namespace Screen_Capture {
@@ -35,6 +36,19 @@ namespace Screen_Capture {
 
         CaptureBMP.Bitmap = CreateCompatibleBitmap(MonitorDC.DC, selectedwindow.Size.x, selectedwindow.Size.y);
 
+		// identify the corresponding monitor so we can correctly offset the cursor
+		auto monitors = GetMonitors();
+		HMONITOR m = MonitorFromWindow(SelectedWindow, MONITOR_DEFAULTTOPRIMARY);
+        MONITORINFOEX minfo = {0};
+        minfo.cbSize = sizeof(MONITORINFOEX);
+        GetMonitorInfo(m, &minfo);
+
+		for (auto mit = monitors.begin(); mit != monitors.end(); mit++) {
+            if (strcmp(mit->Name, minfo.szDevice) == 0) {
+              SelectedMonitor = *mit;
+			}
+		}
+
         if (!MonitorDC.DC || !CaptureDC.DC || !CaptureBMP.Bitmap) {
             return DUPL_RETURN::DUPL_RETURN_ERROR_EXPECTED;
         }
@@ -61,7 +75,8 @@ namespace Screen_Capture {
             return DUPL_RETURN::DUPL_RETURN_ERROR_EXPECTED; // likely a permission issue
         }
         else {
-
+            DrawCursor();
+			
             BITMAPINFOHEADER bi;
             memset(&bi, 0, sizeof(bi));
 
@@ -72,20 +87,21 @@ namespace Screen_Capture {
             bi.biPlanes = 1;
             bi.biBitCount = sizeof(ImageBGRA) * 8; // always 32 bits damnit!!!
             bi.biCompression = BI_RGB;
-            bi.biSizeImage = ((ret.right * bi.biBitCount + 31) / (sizeof(ImageBGRA) * 8)) * sizeof(ImageBGRA)  * ret.bottom;
+            bi.biSizeImage = ((ret.right * bi.biBitCount + 31) / (sizeof(ImageBGRA) * 8)) * sizeof(ImageBGRA) * ret.bottom;
             GetDIBits(MonitorDC.DC, CaptureBMP.Bitmap, 0, (UINT)ret.bottom, NewImageBuffer.get(), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
             SelectObject(CaptureDC.DC, originalBmp);
-            ProcessCapture(Data->ScreenCaptureData, *this, currentmonitorinfo, NewImageBuffer.get(), Width(SelectedMonitor)* sizeof(ImageBGRA));
+            ProcessCapture(Data->ScreenCaptureData, *this, currentmonitorinfo, NewImageBuffer.get(), Width(SelectedMonitor) * sizeof(ImageBGRA));
         }
 
         return Ret;
     }
 
-    static bool IsChildWindowToComposite( HWND rootWindow, HWND candidate ) {
+    static bool IsChildWindowToComposite(HWND rootWindow, HWND candidate)
+    {
         if (rootWindow == candidate)
             return false;
 
-        if (!IsWindowVisible(candidate))
+        if (!IsWindowVisible(candidate)) 
             return false;
 
         LONG exStyle = GetWindowLong(candidate, GWL_EXSTYLE);
@@ -99,7 +115,7 @@ namespace Screen_Capture {
 
         // make sure it's a popup
         LONG style = GetWindowLong(candidate, GWL_STYLE);
-        if (0 == (style & WS_POPUP) ) {
+        if (0 == (style & WS_POPUP)) {
             return false;
         }
 
@@ -124,7 +140,7 @@ namespace Screen_Capture {
 
     static std::vector<HWND> CollectWindowsToComposite(HWND hRootWindow)
     {
-         DWORD topLevelPid = 0;
+        DWORD topLevelPid = 0;
         DWORD topLevelTid = GetWindowThreadProcessId(hRootWindow, &topLevelPid);
 
         std::vector<HWND> compositeWindows;
@@ -139,13 +155,13 @@ namespace Screen_Capture {
             if (hwnd == hRootWindow)
                 return FALSE;
 
-            if ( IsTopLevelWindowToComposite( hRootWindow, hwnd )) {
+            if (IsTopLevelWindowToComposite(hRootWindow, hwnd)) {
                 compositeWindows.push_back(hwnd);
             }
 
             return TRUE;
         };
-         EnumWindows([]( HWND hwnd, LPARAM callbackParam) { return (*static_cast<decltype(fnTopLevelCallback) *>((void *)callbackParam))(hwnd, 0); },
+        EnumWindows([](HWND hwnd, LPARAM callbackParam) { return (*static_cast<decltype(fnTopLevelCallback) *>((void *)callbackParam))(hwnd, 0); },
                     (LPARAM)&fnTopLevelCallback);
 
         // find all child popup windows that need compositing
@@ -158,11 +174,11 @@ namespace Screen_Capture {
 
             return TRUE;
         };
-         EnumChildWindows(
-             hRootWindow, [](HWND hwnd, LPARAM callbackParam) { return (*static_cast<decltype(fnChildCallback) *>((void *)callbackParam))(hwnd, 0); },
-            (LPARAM)&fnChildCallback);
+        EnumChildWindows(hRootWindow,
+                         [](HWND hwnd, LPARAM callbackParam) { return (*static_cast<decltype(fnChildCallback) *>((void *)callbackParam))(hwnd, 0); },
+                         (LPARAM)&fnChildCallback);
 
-         return compositeWindows;
+        return compositeWindows;
     }
 
     DUPL_RETURN GDIFrameProcessor::ProcessFrame(Window &selectedwindow)
@@ -187,29 +203,30 @@ namespace Screen_Capture {
         auto left = -windowrect.ClientBorder.left;
         auto top = -windowrect.ClientBorder.top;
 
-        BOOL result = PrintWindow((HWND)selectedwindow.Handle, CaptureDC.DC, PW_RENDERFULLCONTENT );
+        BOOL result = PrintWindow((HWND)selectedwindow.Handle, CaptureDC.DC, PW_RENDERFULLCONTENT);
 
-        if ( !result ) {
+        if (!result) {
             result = BitBlt(CaptureDC.DC, left, top, ret.right, ret.bottom, MonitorDC.DC, 0, 0, SRCCOPY | CAPTUREBLT);
         }
 
-        if ( !result ) {
+        if (!result) {
             // if the screen cannot be captured, return
             SelectObject(CaptureDC.DC, originalBmp);
             return DUPL_RETURN::DUPL_RETURN_ERROR_EXPECTED; // likely a permission issue
         }
-
-        //std::vector<HWND> childrenToComposite = CollectWindowsToComposite((HWND)selectedwindow.Handle);
+            
+        // std::vector<HWND> childrenToComposite = CollectWindowsToComposite((HWND)selectedwindow.Handle);
         //
         //// list is ordered topmost to bottommost, so we visit them in reverse order to let painter's algorithm work
-        //for ( auto child = childrenToComposite.rbegin(); child != childrenToComposite.rend(); child++ ) {
+        // for ( auto child = childrenToComposite.rbegin(); child != childrenToComposite.rend(); child++ ) {
         //    auto childRect = SL::Screen_Capture::GetWindowRect( *child );
 
         //    HDC srcDC = GetWindowDC(*child);
 
         //    // if this fails we just won't composite this window, so continue with the others to get what we can
-        //    BOOL childBlitSuccess = BitBlt(CaptureDC.DC, childRect.ClientRect.left - windowrect.ClientRect.left, childRect.ClientRect.top - windowrect.ClientRect.top,
-        //           childRect.ClientRect.right - childRect.ClientRect.left, childRect.ClientRect.bottom - childRect.ClientRect.top, 
+        //    BOOL childBlitSuccess = BitBlt(CaptureDC.DC, childRect.ClientRect.left - windowrect.ClientRect.left, childRect.ClientRect.top -
+        //    windowrect.ClientRect.top,
+        //           childRect.ClientRect.right - childRect.ClientRect.left, childRect.ClientRect.bottom - childRect.ClientRect.top,
         //           srcDC, 0, 0,
         //           SRCCOPY | CAPTUREBLT);
         //    if ( !childBlitSuccess ) {
@@ -219,20 +236,75 @@ namespace Screen_Capture {
         //    ReleaseDC(*child, srcDC);
         //}
 
+		DrawCursor();
+
         BITMAPINFOHEADER bi;
-        memset(&bi, 0, sizeof(bi)); 
-        bi.biSize = sizeof(BITMAPINFOHEADER); 
+        memset(&bi, 0, sizeof(bi));
+        bi.biSize = sizeof(BITMAPINFOHEADER);
         bi.biWidth = Width(ret);
         bi.biHeight = -Height(ret);
         bi.biPlanes = 1;
         bi.biBitCount = sizeof(ImageBGRA) * 8; // always 32 bits damnit!!!
         bi.biCompression = BI_RGB;
-        bi.biSizeImage = ((Width(ret) * bi.biBitCount + 31) / (sizeof(ImageBGRA) * 8)) * sizeof(ImageBGRA)  * Height(ret);
+        bi.biSizeImage = ((Width(ret) * bi.biBitCount + 31) / (sizeof(ImageBGRA) * 8)) * sizeof(ImageBGRA) * Height(ret);
         GetDIBits(MonitorDC.DC, CaptureBMP.Bitmap, 0, (UINT)Height(ret), NewImageBuffer.get(), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
         SelectObject(CaptureDC.DC, originalBmp);
-        ProcessCapture(Data->WindowCaptureData, *this, selectedwindow, NewImageBuffer.get(), Width(selectedwindow)* sizeof(ImageBGRA));
+        ProcessCapture(Data->WindowCaptureData, *this, selectedwindow, NewImageBuffer.get(), Width(selectedwindow) * sizeof(ImageBGRA));
 
         return Ret;
     }
+
+	void GDIFrameProcessor::DrawCursor() {
+        CURSORINFO cursorInfo = {0};
+        cursorInfo.cbSize = sizeof(CURSORINFO);
+
+        if (GetCursorInfo(&cursorInfo) == TRUE) {
+            if (cursorInfo.flags == CURSOR_SHOWING) {
+
+                HICON hicon = CopyIcon(cursorInfo.hCursor);
+
+                if (hicon != NULL) {
+
+                    ICONINFO iconInfo = {0};
+
+                    if (GetIconInfo(hicon, &iconInfo)) {
+                        const int x = cursorInfo.ptScreenPos.x - iconInfo.xHotspot - SelectedMonitor.OffsetX;
+                        const int y = cursorInfo.ptScreenPos.y - iconInfo.yHotspot - SelectedMonitor.OffsetY;
+
+                        BITMAP maskBitmap = {0};
+                        GetObject(iconInfo.hbmMask, sizeof(maskBitmap), &maskBitmap);
+
+                        // normal "monochrome" icons e.g. i-beam appear to work fine with DrawIconEx
+                        // icons with a color mask do not seem to work correctly and we need to manually bitblt
+                        // each bitmap mask in correctly (AND the mask, and XOR the color)
+                        if (maskBitmap.bmHeight == maskBitmap.bmWidth * 2 && iconInfo.hbmColor == NULL) {
+                            DrawIconEx(CaptureDC.DC, x, y, hicon, maskBitmap.bmWidth, maskBitmap.bmWidth, 0, NULL, DI_NORMAL);
+                        }
+                        else {
+                            BITMAP colorBitmap = {0};
+                            GetObject(iconInfo.hbmColor, sizeof(colorBitmap), &colorBitmap);
+
+                            HDC hDC = GetDC(NULL);
+                            HDC hMemDC = CreateCompatibleDC(hDC);
+
+                            SelectObject(hMemDC, iconInfo.hbmMask);
+                            BitBlt(CaptureDC.DC, x, y, maskBitmap.bmHeight, maskBitmap.bmWidth, hMemDC, 0, 0, SRCAND);
+
+                            SelectObject(hMemDC, iconInfo.hbmColor);
+                            BitBlt(CaptureDC.DC, x, y, colorBitmap.bmHeight, colorBitmap.bmWidth, hMemDC, 0, 0, SRCINVERT);
+
+                            DeleteDC(hMemDC);
+                            ReleaseDC(NULL, hDC);
+                        }
+
+						DeleteObject(iconInfo.hbmColor);
+                        DeleteObject(iconInfo.hbmMask);
+                    }
+
+                    DestroyIcon(hicon);
+                }
+            }
+        }
+	}
 } // namespace Screen_Capture
 } // namespace SL

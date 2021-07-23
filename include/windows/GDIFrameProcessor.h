@@ -16,6 +16,9 @@ namespace SL {
             std::unique_ptr<unsigned char[]> NewImageBuffer;
 
             std::shared_ptr<Thread_Data> Data;
+
+			void DrawCursor();
+
         public:
             void Pause() {}
             void Resume() {}
