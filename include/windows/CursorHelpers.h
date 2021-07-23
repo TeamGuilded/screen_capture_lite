@@ -33,12 +33,6 @@ class CursorHelpers {
                             BITMAP colorBitmap = {0};
                             GetObject(iconInfo.hbmColor, sizeof(colorBitmap), &colorBitmap);
 
-                            BLENDFUNCTION bf;
-                            bf.SourceConstantAlpha = 255;
-                            bf.BlendOp = AC_SRC_OVER;
-                            bf.BlendFlags = 0;
-                            bf.AlphaFormat = AC_SRC_ALPHA;
-
                             HDC hDC = GetDC(NULL);
                             HDC hMemDC = CreateCompatibleDC(hDC);
 

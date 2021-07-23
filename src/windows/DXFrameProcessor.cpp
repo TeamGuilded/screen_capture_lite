@@ -1,6 +1,6 @@
 #include "DXFrameProcessor.h"
 #include "CursorHelpers.h"
- 
+
 #include <atomic>
 #include <iostream>
 #include <memory>
@@ -326,7 +326,7 @@ namespace Screen_Capture {
         }
 
 
-		
+
 
 
 		if (!CursorSurf || !StagingSurf) {
@@ -372,7 +372,7 @@ namespace Screen_Capture {
             }
 		}
 
-        
+
         if (Width(currentmonitorinfo) == Width(SelectedMonitor) && Height(currentmonitorinfo) == Height(SelectedMonitor)) {
 			// we first copy the acquired image into our cursor surface so that we can perform GDI operations on it
             DeviceContext->CopyResource(CursorSurf.Get(), aquireddesktopimage.Get());
