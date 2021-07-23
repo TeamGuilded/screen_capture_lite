@@ -16,6 +16,7 @@ namespace SL {
             Microsoft::WRL::ComPtr<ID3D11Device> Device;
             Microsoft::WRL::ComPtr<ID3D11DeviceContext> DeviceContext;
             Microsoft::WRL::ComPtr<ID3D11Texture2D> StagingSurf;
+            Microsoft::WRL::ComPtr<ID3D11Texture2D> CursorSurf;
 
             Microsoft::WRL::ComPtr<IDXGIOutputDuplication> OutputDuplication;
             DXGI_OUTPUT_DESC OutputDesc;

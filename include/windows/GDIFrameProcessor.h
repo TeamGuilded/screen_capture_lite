@@ -17,8 +17,6 @@ namespace SL {
 
             std::shared_ptr<Thread_Data> Data;
 
-			void DrawCursor();
-
         public:
             void Pause() {}
             void Resume() {}
