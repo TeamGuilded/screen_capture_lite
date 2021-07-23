@@ -1,6 +1,6 @@
 #include "GDIFrameProcessor.h"
 #include "CursorHelpers.h"
-     
+
 #include <Dwmapi.h>
 #include <iostream>
 
@@ -39,6 +39,7 @@ namespace Screen_Capture {
         CaptureBMP.Bitmap = CreateCompatibleBitmap(MonitorDC.DC, selectedwindow.Size.x, selectedwindow.Size.y);
 
 		// identify the corresponding monitor so we can correctly offset the cursor
+
 		auto monitors = GetMonitors();
 		HMONITOR m = MonitorFromWindow(SelectedWindow, MONITOR_DEFAULTTOPRIMARY);
         MONITORINFOEX minfo = {0};
@@ -78,7 +79,7 @@ namespace Screen_Capture {
         }
         else {
             CursorHelpers::DrawCursor(CaptureDC.DC, SelectedMonitor.OffsetX, SelectedMonitor.OffsetY);
-			
+
             BITMAPINFOHEADER bi;
             memset(&bi, 0, sizeof(bi));
 
@@ -103,7 +104,7 @@ namespace Screen_Capture {
         if (rootWindow == candidate)
             return false;
 
-        if (!IsWindowVisible(candidate)) 
+        if (!IsWindowVisible(candidate))
             return false;
 
         LONG exStyle = GetWindowLong(candidate, GWL_EXSTYLE);
@@ -216,7 +217,7 @@ namespace Screen_Capture {
             SelectObject(CaptureDC.DC, originalBmp);
             return DUPL_RETURN::DUPL_RETURN_ERROR_EXPECTED; // likely a permission issue
         }
-            
+
         // std::vector<HWND> childrenToComposite = CollectWindowsToComposite((HWND)selectedwindow.Handle);
         //
         //// list is ordered topmost to bottommost, so we visit them in reverse order to let painter's algorithm work
