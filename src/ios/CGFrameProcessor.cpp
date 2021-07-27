@@ -44,8 +44,8 @@ namespace Screen_Capture {
             return DUPL_RETURN_ERROR_EXPECTED; // this happens when the window sizes change.
         }
 
-        auto mouse_x_adjusted = (loc.x * window.Scaling) - (window.Position.x * 2) - mouse.HotSpotx;
-        auto mouse_y_adjusted = height - ((loc.y * window.Scaling) - (window.Position.y * 2) + (mouseHeight - mouse.HotSpoty));
+        auto mouse_x_adjusted = (loc.x * window.Scaling) - (window.Position.x * window.Scaling) - mouse.HotSpotx;
+        auto mouse_y_adjusted = height - ((loc.y * window.Scaling) - (window.Position.y * window.Scaling) + (mouseHeight - mouse.HotSpoty));
 
         auto mouseBaseRect = CGRectMake(loc.x, loc.y, mouseWidth, mouseHeight);
         auto mouseAdjustedRect = CGRectMake(mouse_x_adjusted, mouse_y_adjusted, mouseWidth, mouseHeight);

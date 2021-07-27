@@ -380,14 +380,17 @@ namespace Screen_Capture {
 			// setup a DC for the surface
 			Microsoft::WRL::ComPtr<IDXGISurface1> surface;
             auto hr = CursorSurf->QueryInterface(__uuidof(IDXGISurface1), reinterpret_cast<void **>(surface.GetAddressOf()));
-            HDC surfaceDC;
-            surface->GetDC(FALSE, &surfaceDC);
 
-			// draw the cursor using this DC
-            CursorHelpers::DrawCursor(surfaceDC, SelectedMonitor.OffsetX, SelectedMonitor.OffsetY);
+            if (SUCCEEDED(hr)) {
+                HDC surfaceDC;
+                surface->GetDC(FALSE, &surfaceDC);
 
-			// release
-            surface->ReleaseDC(NULL);
+    			// draw the cursor using this DC
+                CursorHelpers::DrawCursor(surfaceDC, SelectedMonitor.OffsetX, SelectedMonitor.OffsetY);
+
+    			// release
+                surface->ReleaseDC(NULL);
+            }
 
 			// copy the composed image into staging surface to be mapped out
             DeviceContext->CopyResource(StagingSurf.Get(), CursorSurf.Get());
