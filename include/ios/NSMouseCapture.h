@@ -11,10 +11,10 @@ struct SL_MouseCur{
 extern "C" {
 #endif
     void SLScreen_Capture_InitMouseCapture();
-    struct SL_MouseCur SLScreen_Capture_GetCurrentMouseImage();
+    struct SL_MouseCur SLScreen_Capture_GetCurrentMouseImage(float scalingFactor);
 #ifdef __cplusplus
 }
 #endif
 
 
-#endif 
+#endif

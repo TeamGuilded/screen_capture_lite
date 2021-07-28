@@ -25,7 +25,7 @@ namespace Screen_Capture {
             auto loc = CGEventGetLocation(mouseev);
             CFRelease(mouseev);
 
-            auto imageRef = SLScreen_Capture_GetCurrentMouseImage();
+            auto imageRef = SLScreen_Capture_GetCurrentMouseImage(1.0f);
 
             if (imageRef.Image == NULL)
                 return Ret;

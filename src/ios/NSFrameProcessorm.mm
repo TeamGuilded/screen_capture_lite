@@ -1,7 +1,7 @@
 #include "NSFrameProcessorm.h"
 #include <thread>
 #include <chrono>
- 
+
 @implementation FrameProcessor
 
 -(SL::Screen_Capture::DUPL_RETURN) Init:(SL::Screen_Capture::NSFrameProcessor*) parent second:(CMTime)interval
@@ -12,10 +12,10 @@
         self.Paused = false;
         self.nsframeprocessor = parent;
         self.avcapturesession = [[AVCaptureSession alloc] init];
-       
+
         self.avinput = [[[AVCaptureScreenInput alloc] initWithDisplayID:SL::Screen_Capture::Id(parent->SelectedMonitor)] autorelease];
         [self.avcapturesession addInput:self.avinput];
-        
+
         self.output = [[AVCaptureVideoDataOutput alloc] init];
         NSDictionary* videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA], (id)kCVPixelBufferPixelFormatTypeKey, nil];
 
@@ -34,13 +34,13 @@
                 r.size.width =parent->SelectedMonitor.Width;
                 [self.avinput setCropRect:r];
         }
-        
+
         [self.avinput setMinFrameDuration:interval];
-        
-        
-        self.avinput.capturesCursor = false;
+
+
+        self.avinput.capturesCursor = true;
         self.avinput.capturesMouseClicks = false;
-       
+
         [self.avcapturesession addOutput:self.output];
         [self.output setSampleBufferDelegate:self queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0)];
         [self.avcapturesession startRunning];
@@ -78,7 +78,7 @@
     self.Paused = false;
     if(self.output){
         self.output.connections[0].enabled = YES;
-    } 
+    }
 }
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
@@ -103,7 +103,7 @@
 namespace SL{
     namespace Screen_Capture{
         void SetFrameInterval(FrameProcessor* f, int ms){
-            
+
         }
         struct NSFrameProcessorImpl{
             FrameProcessor* ptr=nullptr;

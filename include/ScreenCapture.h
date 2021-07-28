@@ -35,6 +35,8 @@ namespace Screen_Capture {
         Point Size;
         // Name will always be lower case. It is converted to lower case internally by the library for comparisons
         char Name[128] = {0};
+
+        float Scaling = 1.0f;
     };
     struct SC_LITE_EXTERN Monitor {
         int Id = INT32_MAX;
